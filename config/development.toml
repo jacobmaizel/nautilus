@@ -1,0 +1,12 @@
+
+[server]
+address = "0.0.0.0"
+port = "5050"
+allowed_origins = "http://localhost:3005,https://api.trainton.com"
+
+[tracing]
+exporter_url="http://localhost:4317/v1/traces"
+resource_name="nautilus"
+rust_log="nautilus=info,otel::tracing=trace,otel=debug,tower_http=debug,axum::rejection=trace,diesel_logger=debug,gcloud_sdk=INFO,diesel_tracing=debug"
+gcloud_project_id="trainton-ddd5c"
+enabled=true

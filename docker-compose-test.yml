@@ -1,0 +1,49 @@
+volumes:
+  nautilus-db-data:
+  cargo-cache:
+  target-cache:
+
+networks:
+  nautilus-network:
+
+services:
+  server:
+    build:
+      dockerfile: ./docker/Dockerfile.test
+      context: .
+    ports:
+      - "5050:5050"
+    volumes:
+      - .:/app
+    # - cargo-cache:/usr/local/cargo/registry
+    # - target-cache:/app/target
+    environment:
+      - RUST_LOG=nautilus=trace,otel::tracing=trace,otel=debug,tower_http=debug,axum::rejection=trace,diesel_logger=debug
+      # - CARGO_TARGET_DIR=/target
+      # - NAUTILUS_ENVIRONMENT=test
+      - DB_URL=postgresql://postgres:postgres@postgres:5433/postgres
+    depends_on:
+      - db
+    networks:
+      - nautilus-network
+
+  db:
+    image: postgres:16.0
+    restart: always
+    attach: false
+    volumes:
+      - nautilus-db-data:/var/lib/postgresql/data
+    environment:
+      - PGUSER=postgres
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nautilus-network

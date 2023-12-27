@@ -1,0 +1,104 @@
+name: CI/CD
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "*"
+jobs:
+  rustfmt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup update nightly && rustup default nightly
+      - run: rustup component add rustfmt
+      - run: cargo fmt --all --check
+
+  # Ensure there are no clippy warnings
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup update nightly && rustup default nightly
+      - run: rustup component add clippy
+      - run: cargo clippy --workspace --all-targets --no-deps -- -D warnings
+
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: just,cargo-nextest
+      - run: rustup update nightly && rustup default nightly
+      - run: just citest
+        env:
+          NAUTILUS_ENVIRONMENT: test
+          DB_URL: postgresql://postgres:postgres@localhost:5432/postgres
+
+  docker-release:
+    name: Tagged Docker release to Google Artifact Registry
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
+
+    permissions:
+      contents: "read"
+      id-token: "write"
+
+    steps:
+      - id: checkout
+        name: Checkout
+        uses: actions/checkout@v4
+
+      - id: auth
+        name: Authenticate with Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          workload_identity_provider: ${{secrets.GCLOUD_WORKLOAD_ID_PROVIDER}}
+          service_account: ${{secrets.GCLOUD_GAR_SERVICE_ACCOUNT}}
+          access_token_lifetime: 300s
+
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v2"
+        with:
+          version: ">= 363.0.0"
+
+      - name: "Configure Gcloud docker"
+        run: "gcloud auth configure-docker us-east1-docker.pkg.dev"
+
+      - name: Login to Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: us-east1-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+
+      - name: Get tag
+        id: get-tag
+        run: echo "short_ref=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push to Google Artifact Registry
+        uses: docker/build-push-action@v5
+        with:
+          file: ./docker/Dockerfile.prod
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_IMAGE_TAG_BASE }}:${{ steps.get-tag.outputs.short_ref }}
+            ${{ secrets.DOCKER_IMAGE_TAG_BASE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

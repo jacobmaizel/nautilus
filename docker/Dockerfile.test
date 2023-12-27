@@ -1,0 +1,19 @@
+
+FROM rust
+
+
+RUN curl -LsSf https://get.nexte.st/latest/mac | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin
+
+# COPY ./config ./config
+# COPY ./src ./src
+# COPY ./migrations ./migrations
+
+# COPY Cargo.toml Cargo.toml
+# COPY Cargo.lock Cargo.lock
+# COPY diesel.toml diesel.toml
+
+WORKDIR /app
+COPY . /app
+
+# RUN cargo nextest run
+# ENTRYPOINT ["cargo", "nextest", "run"]

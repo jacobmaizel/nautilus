@@ -1,0 +1,58 @@
+volumes:
+  nautilus-db-data:
+  cargo-cache:
+  target-cache:
+
+networks:
+  nautilus-network:
+
+services:
+  db:
+    image: postgres:16.0
+    restart: always
+    volumes:
+      - nautilus-db-data:/var/lib/postgresql/data
+    environment:
+      - PGUSER=postgres
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nautilus-network
+
+  adminer:
+    image: adminer
+    attach: false
+    restart: always
+    ports:
+      - 8082:8080
+    logging:
+      driver: none
+    networks:
+      - nautilus-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.56
+    # attach: false
+    restart: always
+    ports:
+      - 16686:16686
+      - 14268:14268
+      - 14269:14269
+      - 14250:14250
+      - 4317:4317
+      - 4318:4318
+      - 9411:9411
+      - 5775:5775/udp
+      - 6831:6831/udp
+      - 6832:6832/udp
+      - 5778:5778
+    networks:
+      - nautilus-network
