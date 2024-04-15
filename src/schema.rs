@@ -88,6 +88,19 @@ diesel::table! {
 }
 
 diesel::table! {
+    feedback (id) {
+        id -> Uuid,
+        created_at -> Timestamptz,
+        user_id -> Nullable<Uuid>,
+        #[max_length = 100]
+        title -> Varchar,
+        #[max_length = 500]
+        description -> Varchar,
+        followup -> Bool,
+    }
+}
+
+diesel::table! {
     notifications (id) {
         id -> Uuid,
         created_at -> Timestamptz,
@@ -208,6 +221,7 @@ diesel::table! {
 diesel::joinable!(certifications -> users (user_id));
 diesel::joinable!(exercises -> users (owner_id));
 diesel::joinable!(exercises -> workouts (workout_id));
+diesel::joinable!(feedback -> users (user_id));
 diesel::joinable!(programs -> users (owner_id));
 diesel::joinable!(workouts -> programs (program_id));
 diesel::joinable!(workouts -> users (owner_id));
@@ -217,6 +231,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     certifications,
     clients,
     exercises,
+    feedback,
     notifications,
     programs,
     users,

@@ -3,6 +3,7 @@ pub mod betacode;
 pub mod certification;
 pub mod client;
 pub mod exercise;
+pub mod feedback;
 pub mod notification;
 pub mod program;
 pub mod user;
