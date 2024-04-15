@@ -16,3 +16,4 @@ Features:
 -   CI/CD Pipeline [ref](./.github/workflows/cicd.yml) authenticating and pushing to [Artifact Registry](https://cloud.google.com/artifact-registry).
 -   Environment specific config files and loading [ref](./src/settings.rs)
 -   Custom Axum Extractors [ref](./src/util/extractors.rs)
+-   Size-minimized, statically linked production docker build, 13.4MB Final Binary [ref](./docker/Dockerfile.prod)
