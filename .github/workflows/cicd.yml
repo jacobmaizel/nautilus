@@ -10,8 +10,7 @@ on:
 
 jobs:
   trufflehog:
-    - name: TruffleHog OSS
-      uses: trufflesecurity/trufflehog@v3.73.0
+    uses: trufflesecurity/trufflehog@v3.73.0
 
   rustfmt:
     runs-on: ubuntu-latest
