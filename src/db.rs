@@ -45,7 +45,6 @@ impl Db {
 
 fn init_db(url: String) -> Result<DbPool> {
     let pool = create_connection_pool(url)?;
-    println!("DB Connected");
 
     Ok(pool)
 }
