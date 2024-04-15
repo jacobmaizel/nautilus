@@ -9,9 +9,6 @@ on:
     #   - "*"
 
 jobs:
-  trufflehog:
-    uses: trufflesecurity/trufflehog@v3.73.0
-
   rustfmt:
     runs-on: ubuntu-latest
     steps:
