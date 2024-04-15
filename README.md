@@ -1,20 +1,18 @@
-# nautilus
+# Nautilus
 
-## Helpful link
+### Backend powering [Trainton](https://trainton.com/beta)
 
-### Prometheus
+You can find the [ WIP Blog ](https://www.jacobmaizel.com/projects/training-platform) here.
 
-https://medium.com/@zzzzzYang/implement-opentelemetry-to-export-data-to-jaeger-prometheus-and-grafana-1098352370c0
+Written in Rust and Axum 🦀
 
-https://grafana.com/docs/grafana/latest/setup-grafana/set-up-grafana-monitoring/#:~:text=Pull%20metrics%20from%20Grafana%20into%20Prometheus&text=Grafana%20now%20exposes%20metrics%20at%20http%3A%2F%2Flocalhost%3A3000%2Fmetrics.&text=Restart%20Prometheus.,and%20then%20click%20Data%20Sources.
+Feel free to reference or use some of the code for your own projects.
 
-https://github.com/jaegertracing/jaeger/blob/main/docker-compose/jaeger-docker-compose.yml
+Features:
 
-https://github.com/jaegertracing/jaeger/tree/main/docker-compose/monitor
-
-### Linkerd
-
-https://linkerd.io/2.14/tasks/using-ingress/
-
-https://linkerd.io/2.14/tasks/grafana/
-https://buoyant.io/blog/deploying-linkerd-in-the-cloud-azure-aws-or-gcp
+-   Pagination [ref](./src/pagination.rs)
+-   Opentelemetry tracing [ref](./src/telemetry.rs) with configurations for dev and prod using [ Cloud Trace ](https://cloud.google.com/trace)
+-   Authentication Middleware [ref] (./src/auth.rs)
+-   CI/CD Pipeline [ref](./.github/workflows/cicd.yml) authenticating and pushing to [Artifact Registry](https://cloud.google.com/artifact-registry).
+-   Environment specific config files and loading [ref](./src/settings.rs)
+-   Custom Axum Extractors [ref](./src/util/extractors.rs)
