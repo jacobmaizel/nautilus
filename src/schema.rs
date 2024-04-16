@@ -47,6 +47,7 @@ diesel::table! {
         #[max_length = 50]
         status -> Varchar,
         invite -> InviteStates,
+        accepted_invite_at -> Nullable<Timestamptz>,
     }
 }
 

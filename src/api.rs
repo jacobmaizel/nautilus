@@ -1,8 +1,9 @@
 pub mod v1;
 use self::v1::{
-    beta::beta_routes, certifications::certification_routes, clients::client_routes,
-    exercises::exercise_routes, notification::notification_routes, programs::program_routes,
-    users::user_routes, workouts::workout_routes,
+    analytics::analytics_routes, beta::beta_routes, certifications::certification_routes,
+    clients::client_routes, exercises::exercise_routes, feedback::feedback_routes,
+    notification::notification_routes, programs::program_routes, users::user_routes,
+    workouts::workout_routes,
 };
 use crate::server::AppState;
 use axum::Router;
@@ -18,4 +19,6 @@ pub fn v1_routes() -> Router<Arc<AppState>> {
         .nest("/exercises", exercise_routes())
         .nest("/clients", client_routes())
         .nest("/notifications", notification_routes())
+        .nest("/feedback", feedback_routes())
+        .nest("/analytics", analytics_routes())
 }

@@ -158,7 +158,6 @@ async fn get_client(
     Ok(Json(data))
 }
 
-#[debug_handler]
 async fn invite_client(
     State(state): State<Arc<AppState>>,
     UserIdExtractor(req_user_id): UserIdExtractor,

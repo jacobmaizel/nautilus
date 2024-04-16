@@ -37,6 +37,7 @@ pub struct Client {
     pub is_active: bool,
     pub status: String,
     pub invite: InviteStates,
+    pub accepted_invite_at: Option<chrono::DateTime<chrono::Utc>>,
 }
 
 #[derive(Serialize)]
@@ -68,4 +69,5 @@ pub struct PatchClient {
     pub is_active: Option<bool>,
     pub status: Option<String>,
     pub invite: Option<InviteStates>,
+    pub accepted_invite_at: Option<chrono::DateTime<chrono::Utc>>,
 }
