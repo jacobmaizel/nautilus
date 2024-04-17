@@ -46,7 +46,9 @@ impl AppState {
         let settings = crate::settings::Settings::new().expect("Failed to load settings");
         let pool = crate::db::Db::new(db_url);
 
-        pool.run_migrations().expect("Failed to run migrations!");
+        if settings.environment != "test" {
+            pool.run_migrations().expect("Failed to run migrations!");
+        }
 
         let cache = Cache::builder()
             .time_to_live(Duration::from_secs(60 * 60))
