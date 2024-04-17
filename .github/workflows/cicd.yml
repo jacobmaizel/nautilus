@@ -48,6 +48,11 @@ jobs:
         env:
           NAUTILUS_ENVIRONMENT: test
           DB_URL: postgresql://postgres:postgres@localhost:5432/postgres
+          AUTH__AUTH_DOMAIN: auth
+          AUTH__AUTH_AUDIENCE: auth
+          AUTH__AUTH_MANAGEMENT_AUDIENCE: auth
+          AUTH__AUTH_MANAGEMENT_CLIENT_ID: auth
+          AUTH__AUTH_MANAGEMENT_SECRET: auth
 
   docker-release:
     name: Tagged Docker release to Google Artifact Registry
