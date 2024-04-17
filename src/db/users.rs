@@ -1,5 +1,5 @@
 use super::{
-    models::{self, user::NewUser},
+    models::{self},
     DbConnection,
 };
 use crate::{error::unauthorized, types::AppResult};

@@ -1,7 +1,7 @@
 use crate::{
     db::{
         models::betacode::{BetaCode, NewBetaCode},
-        users::{get_user, guard_admin},
+        users::guard_admin,
     },
     error::{api_error, json_msg},
     server::AppState,

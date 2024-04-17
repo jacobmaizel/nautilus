@@ -6,7 +6,7 @@ default:
 test:
     ./scripts/tests.sh
 
-nextest:
+citest:
   cargo nextest run
 
 clippy:

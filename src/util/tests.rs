@@ -1,23 +1,13 @@
 use crate::{
-    api::{
-        common::{api_fallback, healthcheck},
-        v1_routes,
-    },
+    api::{common::healthcheck, v1_routes},
     db::{
         models::user::{NewUser, User},
-        DbConnection, MIGRATIONS,
+        DbConnection,
     },
     server::AppState,
 };
 use axum::{routing::get, Extension, Router};
-use diesel::{
-    insert_into,
-    prelude::*,
-    r2d2::{ConnectionManager, Pool, PooledConnection},
-    Connection, PgConnection,
-};
-use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use dotenv::dotenv;
+use diesel::{insert_into, prelude::*};
 use std::sync::Arc;
 
 pub struct TestContext {
