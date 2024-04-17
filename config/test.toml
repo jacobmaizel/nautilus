@@ -8,4 +8,5 @@ allowed_origins = "http://localhost:3005,https://api.trainton.com"
 exporter_url="http://jaeger:4317/v1/traces"
 resource_name="nautilus"
 rust_log="nautilus=trace,otel::tracing=trace,otel=debug,tower_http=debug,axum::rejection=trace,diesel_logger=debug"
+gcloud_project_id="trainton-ddd5c"
 enabled=false
