@@ -61,13 +61,7 @@ pub async fn create_beta_code(
 
     let conn = &mut state.db_pool.get_conn();
 
-    let user = get_user(user_id, conn).map_err(api_error)?;
-
-    //     user.phone_number.clone
-
-    if !user.is_admin {
-        return Err((StatusCode::UNAUTHORIZED, json_msg("Unauthorized")));
-    }
+    let _ = guard_admin(user_id, conn);
 
     let bc = insert_into(betacode)
         .values(&body)
@@ -101,11 +95,7 @@ pub async fn resetaccess(
     use crate::schema::users::dsl::*;
 
     let conn = &mut state.db_pool.get_conn();
-    let user = get_user(user_id, conn).map_err(api_error)?;
-
-    if !user.is_admin {
-        return Err((StatusCode::UNAUTHORIZED, json_msg("Unauthorized")));
-    }
+    let _ = guard_admin(user_id, conn);
 
     let _ = update(users)
         .set(beta_access.eq(false))
@@ -114,4 +104,39 @@ pub async fn resetaccess(
         .map_err(api_error)?;
 
     Ok(json_msg("Valid"))
+}
+
+#[allow(unused_imports)]
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::util::tests::*;
+    use axum::{
+        body::Body,
+        http::{self, Request},
+    };
+    use http_body_util::BodyExt;
+    use serde_json::{json, Value};
+    use std::net::{SocketAddr, TcpListener};
+    use tower::ServiceExt; // for `app.oneshot()`
+
+    #[tokio::test]
+    async fn test_admin_only_create_beta() {
+        let ctx = TestContext::default();
+
+        let bc = NewBetaCode { code: "hi".into() };
+
+        let req = Request::builder()
+            .method(http::Method::POST)
+            .uri("/v1/beta")
+            .header(http::header::CONTENT_TYPE, "application/json")
+            .body(Body::from(serde_json::to_vec(&json!(bc)).unwrap()))
+            .unwrap();
+        let res = ctx.router.oneshot(req).await.unwrap();
+
+        assert_eq!(res.status(), http::StatusCode::OK);
+
+        // let body = res.into_body().collect().await.unwrap().to_bytes();
+        // let body: Value = serde_json::from_slice(&body).unwrap();
+    }
 }

@@ -1,13 +1,16 @@
+default:
+  just clippy
+  just test
+  gitleaks detect
+
 test:
     ./scripts/tests.sh
 
-citest:
+nextest:
   cargo nextest run
 
+clippy:
+  cargo clippy --workspace --all-targets --no-deps -- -D warnings
 
-# https://www.reddit.com/r/docker/comments/uencaa/create_docker_image_on_m1_mac_for_x86/
-push:
-  docker buildx build --platform linux/amd64 \
-    -f docker/Dockerfile.localprod \
-    -t us.gcr.io/trainton-ddd5c/nautilus:1.0 \
-    —-push . \
+flame:
+  CARGO_PROFILE_RELEASE_DEBUG=true cargo flamegraph --root

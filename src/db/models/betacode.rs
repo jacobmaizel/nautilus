@@ -11,7 +11,7 @@ pub struct BetaCode {
     pub code: String,
 }
 
-#[derive(Insertable, Deserialize, Debug)]
+#[derive(Insertable, Serialize, Deserialize, Debug)]
 #[diesel(table_name = crate::schema::betacode)]
 pub struct NewBetaCode {
     pub code: String,

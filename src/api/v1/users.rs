@@ -1,7 +1,10 @@
 use crate::{
-    db::models::{
-        self,
-        user::{NewUser, PublicUser, User},
+    db::{
+        models::{
+            self,
+            user::{NewUser, PublicUser, User},
+        },
+        users::guard_admin,
     },
     error::{api_error, custom, json_msg},
     server::AppState,
@@ -15,7 +18,10 @@ use std::sync::Arc;
 
 pub fn user_routes() -> Router<Arc<AppState>> {
     Router::new()
-        .route("/:user_name_path", get(get_user_by_username))
+        .route(
+            "/:user_name_path",
+            get(get_user_by_username).delete(admin_delete_user_by_username),
+        )
         .route("/me", get(get_me).patch(update_me))
         .route("/exists", get(check_username_exists))
         .route("/", get(admin_list_users))
@@ -134,4 +140,20 @@ pub async fn admin_list_users(
     let res = users.select(User::as_select()).load::<User>(&mut conn)?;
 
     Ok(Json(res))
+}
+
+pub async fn admin_delete_user_by_username(
+    State(state): State<Arc<AppState>>,
+    UserIdExtractor(user_id_admin): UserIdExtractor,
+    Path(user_name_path): Path<String>,
+) -> AppResult<Json<serde_json::Value>> {
+    use crate::schema::users::dsl::*;
+
+    let mut conn = state.db_pool.get_conn();
+    let _ = guard_admin(user_id_admin, &mut conn);
+
+    let res: usize =
+        diesel::delete(users.filter(user_name.eq(user_name_path))).execute(&mut conn)?;
+
+    Ok(Json(serde_json::json!({"deleted": res})))
 }

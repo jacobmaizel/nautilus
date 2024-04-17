@@ -15,5 +15,8 @@ RUN curl -LsSf https://get.nexte.st/latest/mac | tar zxf - -C ${CARGO_HOME:-~/.c
 WORKDIR /app
 COPY . /app
 
+# ENV DB_URL=postgresql://postgres:postgres@localhost:5433/postgres
+
+
 # RUN cargo nextest run
 # ENTRYPOINT ["cargo", "nextest", "run"]

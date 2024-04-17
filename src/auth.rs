@@ -284,12 +284,14 @@ impl From<serde_json::Value> for NewUser {
             .get("given_name")
             .unwrap()
             .to_string()
-            .replace('"', "");
+            .replace('"', "")
+            .to_ascii_lowercase();
         let last_name = serde_val
             .get("family_name")
             .unwrap()
             .to_string()
-            .replace('"', "");
+            .replace('"', "")
+            .to_ascii_lowercase();
 
         let user_name = first_name.clone()
             + &last_name.clone()

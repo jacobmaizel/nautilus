@@ -21,7 +21,7 @@ services:
       - RUST_LOG=nautilus=trace,otel::tracing=trace,otel=debug,tower_http=debug,axum::rejection=trace,diesel_logger=debug
       # - CARGO_TARGET_DIR=/target
       # - NAUTILUS_ENVIRONMENT=test
-      - DB_URL=postgresql://postgres:postgres@postgres:5433/postgres
+      - DB_URL=postgresql://postgres:postgres@localhost:5433/postgres
     depends_on:
       - db
     networks:

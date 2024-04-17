@@ -1,3 +1,4 @@
+pub mod common;
 pub mod v1;
 use self::v1::{
     analytics::analytics_routes, beta::beta_routes, certifications::certification_routes,

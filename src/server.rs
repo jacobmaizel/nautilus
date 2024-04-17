@@ -1,16 +1,21 @@
-use crate::{api::v1_routes, auth::auth_middleware, telemetry};
+use crate::{
+    api::{
+        common::{api_fallback, healthcheck},
+        v1_routes,
+    },
+    auth::auth_middleware,
+    telemetry,
+};
 use anyhow::Result;
 use axum::{
     middleware::{from_fn_with_state, map_request},
     routing::get,
-    Json, Router,
+    Router,
 };
 use dotenv::dotenv;
 use http::{HeaderValue, Method};
-use hyper::StatusCode;
 use moka::sync::Cache;
 use std::{net::SocketAddr, sync::Arc, time::Duration};
-use tokio::signal;
 use tower::ServiceBuilder;
 use tower_http::{
     cors::{Any, CorsLayer},
@@ -35,6 +40,7 @@ impl Default for AppState {
 
 impl AppState {
     pub fn new() -> Self {
+        dotenv().ok();
         let db_url = std::env::var("DB_URL").expect("DATABASE_URL must be set");
 
         let settings = crate::settings::Settings::new().expect("Failed to load settings");
@@ -52,46 +58,6 @@ impl AppState {
             db_pool: pool,
             cache,
         }
-    }
-
-    pub fn new_test() -> Self {
-        todo!("set this up ")
-    }
-}
-
-async fn healthcheck() -> StatusCode {
-    StatusCode::OK
-}
-
-async fn api_fallback() -> (StatusCode, Json<serde_json::Value>) {
-    (
-        StatusCode::NOT_FOUND,
-        Json(serde_json::json!({ "message": "Not Found" })),
-    )
-}
-
-#[allow(dead_code)]
-async fn shutdown_signal() {
-    let ctrl_c = async {
-        signal::ctrl_c()
-            .await
-            .expect("failed to install Ctrl+C handler");
-    };
-
-    #[cfg(unix)]
-    let terminate = async {
-        signal::unix::signal(signal::unix::SignalKind::terminate())
-            .expect("failed to install signal handler")
-            .recv()
-            .await;
-    };
-
-    // #[cfg(not(unix))]
-    // let terminate = std::future::pending::<()>();
-
-    tokio::select! {
-        _ = ctrl_c => {},
-        _ = terminate => {},
     }
 }
 
@@ -126,7 +92,7 @@ pub fn conditional_layer<L, F: FnOnce() -> L>(
     axum_extra::middleware::option_layer(condition.then(layer))
 }
 
-fn app(state: Arc<AppState>) -> Router {
+fn build_router(state: Arc<AppState>) -> Router {
     let trace_layer = ServiceBuilder::new().layer(
         TraceLayer::new_for_http()
             .make_span_with(telemetry::traces::make_span)
@@ -142,28 +108,16 @@ fn app(state: Arc<AppState>) -> Router {
         .nest("/v1", v1_routes())
         .route_layer(from_fn_with_state(state.clone(), auth_middleware))
         .layer(trace_layer)
-        // .layer(conditional_layer(state.settings.tracing.enabled, || {
-        //     trace_layer
-        // }))
-        .layer(map_request(telemetry::traces::record_trace_id))
         .with_state(Arc::clone(&state))
         .route("/", get(healthcheck))
+        .layer(map_request(telemetry::traces::record_trace_id))
         .fallback(api_fallback)
         .layer(cors_layer(state.clone()))
         .layer(TimeoutLayer::new(Duration::from_secs(30)))
         .layer(RequestBodyTimeoutLayer::new(Duration::from_secs(30)))
 }
 
-#[allow(dead_code)]
-fn test_app() -> Router {
-    axum::Router::new()
-        .route("/", get(healthcheck))
-        .fallback(api_fallback)
-}
-
 pub async fn start() -> Result<()> {
-    dotenv().ok();
-
     let state = Arc::new(AppState::new());
 
     let port = std::env::var("PORT").expect("PORT env var must be set");
@@ -182,7 +136,7 @@ pub async fn start() -> Result<()> {
 
     tracing::info!("Nautilus Ready on port {port}");
 
-    let app = app(state);
+    let app = build_router(state);
 
     // let listener = tokio::net::TcpListener::bind(format!("{}:{}", "0.0.0.0", "5050"))
     //     .await
@@ -204,6 +158,7 @@ pub async fn start() -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::util::tests::*;
     use axum::{
         body::Body,
         http::{self, Request},
@@ -214,11 +169,11 @@ mod tests {
 
     #[tokio::test]
     async fn test_healthcheck() {
-        let app = test_app();
+        let ctx = TestContext::default();
 
         let req = Request::builder().uri("/").body(Body::empty()).unwrap();
-        let res = app.oneshot(req).await.unwrap();
+        let res = ctx.router.oneshot(req).await.unwrap();
 
-        assert_eq!(res.status(), StatusCode::OK)
+        assert_eq!(res.status(), http::StatusCode::OK)
     }
 }

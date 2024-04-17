@@ -1,4 +1,6 @@
 pub mod extractors;
+#[cfg(test)]
+pub mod tests;
 use regex::Regex;
 
 pub fn format_slug(base: String) -> String {
