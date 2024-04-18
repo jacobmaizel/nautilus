@@ -48,6 +48,7 @@ jobs:
       - run: ./scripts/run_migrations.sh
       - run: just citest
         env:
+          CARGO_TERM_COLOR: always
           NAUTILUS_ENVIRONMENT: test
           DB_URL: postgresql://postgres:postgres@localhost:5432/postgres
           AUTH__AUTH_DOMAIN: auth
@@ -112,3 +113,10 @@ jobs:
             ${{ secrets.DOCKER_IMAGE_TAG_BASE }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - id: "deploy"
+        name: Deploy to Cloud Run
+        uses: "google-github-actions/deploy-cloudrun@v2"
+        with:
+          service: "nautilus"
+          image: ${{ secrets.DOCKER_IMAGE_TAG_BASE }}:${{ steps.get-tag.outputs.short_ref }}
