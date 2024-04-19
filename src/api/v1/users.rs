@@ -20,7 +20,7 @@ pub fn user_routes() -> Router<Arc<AppState>> {
     Router::new()
         .route(
             "/:user_name_path",
-            get(get_user_by_username).delete(admin_delete_user_by_username),
+            get(get_user_by_username_or_id).delete(admin_delete_user_by_username),
         )
         .route("/me", get(get_me).patch(update_me))
         .route("/exists", get(check_username_exists))
@@ -61,7 +61,7 @@ pub async fn update_me(
     Ok(Json(res))
 }
 // #[instrument(skip(state))]
-pub async fn get_user_by_username(
+pub async fn get_user_by_username_or_id(
     State(state): State<Arc<AppState>>,
     Path(user_name_path): Path<String>,
 ) -> AppResult<Json<PublicUser>> {

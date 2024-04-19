@@ -35,6 +35,26 @@ diesel::table! {
 }
 
 diesel::table! {
+    client_forms (id) {
+        id -> Uuid,
+        created_at -> Timestamptz,
+        client_id -> Nullable<Uuid>,
+        #[max_length = 500]
+        health_history -> Varchar,
+        #[max_length = 500]
+        lifestyle -> Varchar,
+        #[max_length = 500]
+        time_availability -> Varchar,
+        #[max_length = 500]
+        motivation -> Varchar,
+        #[max_length = 500]
+        preferences -> Varchar,
+        #[max_length = 500]
+        extra_details -> Varchar,
+    }
+}
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::InviteStates;
 
@@ -220,6 +240,7 @@ diesel::table! {
 }
 
 diesel::joinable!(certifications -> users (user_id));
+diesel::joinable!(client_forms -> clients (client_id));
 diesel::joinable!(exercises -> users (owner_id));
 diesel::joinable!(exercises -> workouts (workout_id));
 diesel::joinable!(feedback -> users (user_id));
@@ -230,6 +251,7 @@ diesel::joinable!(workouts -> users (owner_id));
 diesel::allow_tables_to_appear_in_same_query!(
     betacode,
     certifications,
+    client_forms,
     clients,
     exercises,
     feedback,

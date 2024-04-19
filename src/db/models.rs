@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 pub mod betacode;
 pub mod certification;
 pub mod client;
+pub mod client_form;
 pub mod exercise;
 pub mod feedback;
 pub mod notification;
