@@ -34,7 +34,10 @@ pub fn client_routes() -> Router<Arc<AppState>> {
                 .patch(patch_client)
                 .delete(delete_client_by_id),
         )
-        .route("/:client_id/forms", post(create_client_form))
+        .route(
+            "/:client_id/forms",
+            post(create_client_form).get(get_client_form),
+        )
         .route("/summary", get(get_clients_summary))
         .route("/invite", post(invite_client))
 }
@@ -154,7 +157,7 @@ async fn get_client(
 
     let res: (Client, PublicUser) = base
         .order(cd::created_at.desc())
-        .filter(cd::user_id.eq(user_id_path))
+        .filter(cd::user_id.eq(user_id_path).or(cd::id.eq(user_id_path)))
         .inner_join(user_dsl::users.on(cd::user_id.eq(user_dsl::id.nullable())))
         .select((base_clients_schema::all_columns, PUBLIC_USER_COLUMNS))
         .first::<(Client, PublicUser)>(&mut conn)?;
@@ -276,7 +279,8 @@ async fn patch_client(
     let mut conn = state.db_pool.get_conn();
 
     let res = diesel::update(clients)
-        .filter(id.eq(client_id).and(user_id.eq(req_user_id)))
+        .filter(id.eq(client_id))
+        .filter(user_id.eq(req_user_id).or(trainer_id.eq(req_user_id)))
         .set(body)
         .returning(Client::as_returning())
         .get_result(&mut conn)?;
@@ -323,32 +327,64 @@ async fn delete_client_by_id(
     Ok(Json(json!({"deleted": rows})))
 }
 
+#[axum::debug_handler]
 async fn create_client_form(
     State(state): State<Arc<AppState>>,
     UserIdExtractor(req_user_id): UserIdExtractor,
     Path(path_client_id): Path<uuid::Uuid>,
     JsonExtractor(body): JsonExtractor<NewClientForm>,
 ) -> AppResult<Json<ClientForm>> {
-    use crate::schema::{client_forms::dsl as cfdsl, clients::dsl as cdsl};
+    use crate::schema::{client_forms::dsl as client_form_dsl, clients::dsl as client_dsl};
 
     let mut conn = state.db_pool.get_conn();
-    let req_user_client: uuid::Uuid = cdsl::clients
-        .filter(cdsl::user_id.eq(req_user_id))
-        .select(cdsl::id)
+    let path_client: Client = client_dsl::clients
+        .filter(client_dsl::id.eq(path_client_id))
+        .select(Client::as_select())
         .first(&mut conn)?;
 
     // client_id from path must match the client's id that the user belongs to, only the user should
     // create forms for their own client.
 
-    if req_user_client != path_client_id {
+    if path_client.user_id != Some(req_user_id) {
+        print!("{:#?}    {:?}", path_client, req_user_id);
+
         return Err(unauthorized());
     }
 
     // client model
-    let res = insert_into(cfdsl::client_forms)
-        .values((&body, cfdsl::client_id.eq(path_client_id)))
+    let res = insert_into(client_form_dsl::client_forms)
+        .values((&body, client_form_dsl::client_id.eq(path_client_id)))
         .returning(ClientForm::as_returning())
         .get_result(&mut conn)?;
+
+    Ok(Json(res))
+}
+
+async fn get_client_form(
+    State(state): State<Arc<AppState>>,
+    UserIdExtractor(req_user_id): UserIdExtractor,
+    Path(path_client_id): Path<uuid::Uuid>,
+) -> AppResult<Json<ClientForm>> {
+    use crate::schema::{client_forms::dsl as client_form_dsl, clients::dsl as client_dsl};
+
+    let mut conn = state.db_pool.get_conn();
+    let path_client: Client = client_dsl::clients
+        .filter(client_dsl::id.eq(path_client_id))
+        .select(Client::as_select())
+        .first(&mut conn)?;
+
+    // client_id from path must match the client's id that the user belongs to, only the user should
+    // create forms for their own client.
+
+    if path_client.user_id != Some(req_user_id) && path_client.trainer_id != Some(req_user_id) {
+        return Err(unauthorized());
+    }
+
+    // client model
+    let res = client_form_dsl::client_forms
+        .filter(client_form_dsl::client_id.eq(path_client.id))
+        .select(ClientForm::as_select())
+        .first(&mut conn)?;
 
     Ok(Json(res))
 }

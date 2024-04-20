@@ -163,6 +163,8 @@ diesel::table! {
         intensity -> IntensityChoices,
         #[max_length = 255]
         slug -> Varchar,
+        template -> Bool,
+        client_id -> Nullable<Uuid>,
     }
 }
 
@@ -244,6 +246,7 @@ diesel::joinable!(client_forms -> clients (client_id));
 diesel::joinable!(exercises -> users (owner_id));
 diesel::joinable!(exercises -> workouts (workout_id));
 diesel::joinable!(feedback -> users (user_id));
+diesel::joinable!(programs -> clients (client_id));
 diesel::joinable!(programs -> users (owner_id));
 diesel::joinable!(workouts -> programs (program_id));
 diesel::joinable!(workouts -> users (owner_id));

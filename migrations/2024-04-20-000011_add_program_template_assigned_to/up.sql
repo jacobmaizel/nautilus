@@ -1,0 +1,5 @@
+-- Your SQL goes here
+
+ALTER TABLE programs
+ADD COLUMN template BOOLEAN NOT NULL DEFAULT FALSE,
+ADD COLUMN client_id uuid REFERENCES clients(id) ON DELETE SET NULL;

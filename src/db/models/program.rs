@@ -21,6 +21,9 @@ use serde::{Deserialize, Serialize};
 //     intensity -> IntensityChoices,
 //     #[max_length = 255]
 //     slug -> Varchar,
+//
+// template -> Bool,
+// client_id -> Nullable<Uuid>,
 // }
 
 #[derive(Debug, Clone, Queryable, Selectable, Serialize, Identifiable, Associations)]
@@ -42,6 +45,8 @@ pub struct Program {
     pub program_image: String,
     pub intensity: super::IntensityChoices,
     pub slug: String,
+    pub template: bool,
+    pub client_id: Option<uuid::Uuid>,
 }
 
 #[derive(Insertable, Deserialize, Debug, AsChangeset)]
@@ -55,4 +60,6 @@ pub struct NewProgram {
     // pub program_image: String,
     pub intensity: super::IntensityChoices,
     // pub slug: String,
+    pub template: bool,
+    pub client_id: Option<uuid::Uuid>,
 }
