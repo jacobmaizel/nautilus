@@ -3,13 +3,14 @@ use crate::{
         models::notification::{NewNotification, Notification},
         users::guard_admin,
     },
+    error::{not_found, unauthorized},
     pagination::*,
     server::AppState,
     types::AppResult,
     util::extractors::{JsonExtractor, Path, QueryExtractor, UserIdExtractor},
 };
 use axum::{extract::State, routing::*, Json};
-use diesel::{insert_into, prelude::*, update};
+use diesel::{dsl::exists, insert_into, prelude::*, select, update};
 use std::sync::Arc;
 
 pub fn notification_routes() -> Router<Arc<AppState>> {
@@ -20,7 +21,10 @@ pub fn notification_routes() -> Router<Arc<AppState>> {
                 .post(create_notification)
                 .delete(delete_notifications),
         )
-        .route("/:notification_id", put(update_notification))
+        .route(
+            "/:notification_id",
+            put(update_notification).delete(delete_notification),
+        )
 }
 
 pub async fn list_notifications(
@@ -90,6 +94,28 @@ async fn delete_notifications(
     guard_admin(req_user_id, &mut conn)?;
 
     let rows: usize = diesel::delete(notifications).execute(&mut conn)?;
+
+    Ok(Json(serde_json::json!({"deleted": rows.to_string()})))
+}
+
+async fn delete_notification(
+    State(state): State<Arc<AppState>>,
+    UserIdExtractor(req_user_id): UserIdExtractor,
+    Path(notification_id): Path<uuid::Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    use crate::schema::notifications::dsl::*;
+
+    let mut conn = state.db_pool.get_conn();
+
+    let filt = notifications.filter(user_id.eq(req_user_id).and(id.eq(notification_id)));
+
+    let noti_exists: bool = select(exists(filt)).get_result(&mut conn)?;
+
+    if !noti_exists {
+        return Err(not_found());
+    }
+
+    let rows: usize = diesel::delete(filt).execute(&mut conn)?;
 
     Ok(Json(serde_json::json!({"deleted": rows.to_string()})))
 }

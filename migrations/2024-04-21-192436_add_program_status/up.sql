@@ -1,0 +1,3 @@
+-- Your SQL goes here
+ALTER TABLE programs
+ADD COLUMN active BOOLEAN NOT NULL DEFAULT FALSE;

@@ -1,5 +1,6 @@
 use crate::{
     db::models::{
+        client::Client,
         exercise::Exercise,
         program::{NewProgram, Program},
         workout::{Workout, WorkoutWithExercises},
@@ -21,15 +22,63 @@ use std::{str::FromStr, sync::Arc};
 pub fn program_routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/", get(list_programs).post(create_program))
+        .route("/active", get(get_active_program))
         .route(
             "/:program_id",
             get(get_program).put(update_program).delete(delete_program),
         )
 }
 
-// #[debug_handler]
+async fn get_active_program(
+    State(state): State<Arc<AppState>>,
+    UserIdExtractor(req_user_id): UserIdExtractor,
+) -> AppResult<Json<ProgramWithWorkouts>> {
+    use crate::schema::{clients::dsl as c_dsl, programs::dsl::*};
+
+    let mut conn = state.db_pool.get_conn();
+
+    let base = programs.into_boxed();
+
+    // user -> client -> programs.assigned_to
+
+    let client: Client = c_dsl::clients
+        .filter(c_dsl::user_id.eq(req_user_id))
+        .select(Client::as_select())
+        .first(&mut conn)?;
+
+    let program_db_res = base
+        .filter(client_id.eq(client.id).and(active.eq(true)))
+        .select(Program::as_select())
+        .first::<Program>(&mut conn)?;
+
+    let workouts_belonging_to_programs = Workout::belonging_to(&program_db_res)
+        .select(Workout::as_select())
+        .load::<Workout>(&mut conn)?;
+
+    let exercises_belonging_to_workouts = Exercise::belonging_to(&workouts_belonging_to_programs)
+        .select(Exercise::as_select())
+        .load::<Exercise>(&mut conn)?;
+
+    let grouped_exercises: Vec<Vec<Exercise>> =
+        exercises_belonging_to_workouts.grouped_by(&workouts_belonging_to_programs);
+
+    let workouts_with_exercises = workouts_belonging_to_programs
+        .into_iter()
+        .zip(grouped_exercises)
+        .map(|(workout, exercises)| WorkoutWithExercises { workout, exercises })
+        .collect();
+
+    let res: ProgramWithWorkouts = ProgramWithWorkouts {
+        program: program_db_res,
+        workouts: workouts_with_exercises,
+    };
+
+    Ok(Json(res))
+}
+
 async fn get_program(
     State(state): State<Arc<AppState>>,
+
     Path(program_path): Path<String>,
 ) -> AppResult<Json<ProgramWithWorkouts>> {
     use crate::schema::programs::dsl::*;
@@ -91,6 +140,10 @@ async fn list_programs(
             return Err(custom(StatusCode::BAD_REQUEST, e.to_string()));
         }
         None => base_q,
+    };
+
+    if let Some(Ok(active_qp)) = hm.0.get("active").map(|val| bool::from_str(val)) {
+        base_q = base_q.filter(programs_dsl::active.eq(active_qp))
     };
 
     let mut conn = state.db_pool.get_conn();

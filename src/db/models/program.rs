@@ -24,6 +24,8 @@ use serde::{Deserialize, Serialize};
 //
 // template -> Bool,
 // client_id -> Nullable<Uuid>,
+//
+//     active bool
 // }
 
 #[derive(Debug, Clone, Queryable, Selectable, Serialize, Identifiable, Associations)]
@@ -47,6 +49,7 @@ pub struct Program {
     pub slug: String,
     pub template: bool,
     pub client_id: Option<uuid::Uuid>,
+    pub active: bool,
 }
 
 #[derive(Insertable, Deserialize, Debug, AsChangeset)]
@@ -62,4 +65,5 @@ pub struct NewProgram {
     // pub slug: String,
     pub template: bool,
     pub client_id: Option<uuid::Uuid>,
+    pub active: bool,
 }

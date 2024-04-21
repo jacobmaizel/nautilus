@@ -23,7 +23,7 @@ pub fn make_span(request: &Request<Body>) -> Span {
     let span_name = format!("{} {}", method, endpoint);
 
     info_span!(
-        "Nautilus HTTP Trace",
+        "Nautilus",
         "otel.name" = span_name,
         "http.method" = method,
         "http.url" = endpoint,

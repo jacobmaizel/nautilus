@@ -165,6 +165,7 @@ diesel::table! {
         slug -> Varchar,
         template -> Bool,
         client_id -> Nullable<Uuid>,
+        active -> Bool,
     }
 }
 
