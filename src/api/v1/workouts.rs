@@ -1,9 +1,10 @@
 use crate::{
     db::models::{
         exercise::Exercise,
-        workout::{NewWorkout, Workout, WorkoutWithExercises},
+        program::Program,
+        workout::{NewWorkout, PatchWorkout, Workout, WorkoutWithExercises},
     },
-    error::custom,
+    error::{custom, unauthorized},
     server::AppState,
     types::AppResult,
     util::{
@@ -21,7 +22,9 @@ pub fn workout_routes() -> Router<Arc<AppState>> {
         .route("/", get(list_workouts).post(create_workout))
         .route(
             "/:workout_id",
-            get(get_workout).put(update_workout).delete(delete_workout),
+            get(get_workout)
+                .patch(update_workout)
+                .delete(delete_workout),
         )
 }
 
@@ -168,29 +171,65 @@ async fn create_workout(
 
 async fn update_workout(
     State(state): State<Arc<AppState>>,
-    UserIdExtractor(user_id_extracted): UserIdExtractor,
+    UserIdExtractor(req_user_id): UserIdExtractor,
     Path(workout_id): Path<uuid::Uuid>,
-    JsonExtractor(body): JsonExtractor<NewWorkout>,
+    JsonExtractor(body): JsonExtractor<PatchWorkout>,
 ) -> AppResult<Json<WorkoutWithExercises>> {
-    use crate::schema::workouts::dsl::*;
+    use crate::schema::{clients::dsl as cli_dsl, programs::dsl as pro_dsl, workouts::dsl::*};
 
     let mut conn = state.db_pool.get_conn();
-    let res = update(workouts)
-        .filter(owner_id.eq(user_id_extracted).and(id.eq(workout_id)))
-        .set(body)
-        .returning(Workout::as_returning())
-        .get_result::<Workout>(&mut conn)?;
 
-    let exercises_belonging_to_workouts = Exercise::belonging_to(&res)
-        .select(Exercise::as_select())
-        .load::<Exercise>(&mut conn)?;
+    // only the owner of the workout or a client that is assigned a program in which this
+    // workout is connected to can update this workout.
 
-    let wrk_exer = WorkoutWithExercises {
-        workout: res,
-        exercises: exercises_belonging_to_workouts,
-    };
+    let req_user_client: Result<uuid::Uuid, diesel::result::Error> = cli_dsl::clients
+        .filter(cli_dsl::user_id.eq(req_user_id))
+        .select(cli_dsl::id)
+        .first::<uuid::Uuid>(&mut conn);
 
-    Ok(Json(wrk_exer))
+    let workout_from_path: Workout = workouts
+        .filter(id.eq(workout_id))
+        .select(Workout::as_select())
+        .first(&mut conn)?;
+
+    let program_for_workout: Result<Program, diesel::result::Error> = pro_dsl::programs
+        .filter(pro_dsl::id.nullable().eq(workout_from_path.program_id))
+        .select(Program::as_select())
+        .first(&mut conn);
+
+    let req_user_is_workout_owner = workout_from_path.owner_id == Some(req_user_id);
+    let req_user_is_client_from_workout_program = req_user_client.is_ok_and(|req_client_id| {
+        program_for_workout
+            .is_ok_and(|prog| prog.client_id.is_some_and(|cli_id| cli_id == req_client_id))
+    });
+
+    if req_user_is_workout_owner || req_user_is_client_from_workout_program {
+        let workout_filter = id.eq(workout_id);
+
+        let res = update(workouts)
+            .filter(workout_filter)
+            .set(body)
+            .returning(Workout::as_returning())
+            .get_result::<Workout>(&mut conn)?;
+
+        let exercises_belonging_to_workouts = Exercise::belonging_to(&res)
+            .select(Exercise::as_select())
+            .load::<Exercise>(&mut conn)?;
+
+        let wrk_exer = WorkoutWithExercises {
+            workout: res,
+            exercises: exercises_belonging_to_workouts,
+        };
+
+        return Ok(Json(wrk_exer));
+    }
+
+    Err(unauthorized())
+
+    // here we know atleast one of the following
+    // 1. the req user is a client
+    // 2. this workout is connected to a program
+    // 3. the workout from path owner might be the owner
 }
 
 async fn delete_workout(

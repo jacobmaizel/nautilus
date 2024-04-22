@@ -3,7 +3,7 @@ use crate::{
         models::notification::{NewNotification, Notification},
         users::guard_admin,
     },
-    error::{not_found, unauthorized},
+    error::not_found,
     pagination::*,
     server::AppState,
     types::AppResult,

@@ -239,6 +239,7 @@ diesel::table! {
         template -> Bool,
         #[max_length = 255]
         slug -> Varchar,
+        complete -> Bool,
     }
 }
 

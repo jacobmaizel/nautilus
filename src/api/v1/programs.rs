@@ -78,7 +78,6 @@ async fn get_active_program(
 
 async fn get_program(
     State(state): State<Arc<AppState>>,
-
     Path(program_path): Path<String>,
 ) -> AppResult<Json<ProgramWithWorkouts>> {
     use crate::schema::programs::dsl::*;
@@ -89,7 +88,7 @@ async fn get_program(
 
     base = match uuid::Uuid::from_str(&program_path) {
         Ok(id_filter) => base.filter(id.eq(id_filter)),
-        Err(_e) => base.filter(slug.eq(program_path)),
+        Err(_) => base.filter(slug.eq(program_path)),
     };
 
     let program_db_res = base
