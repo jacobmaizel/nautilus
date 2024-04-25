@@ -1,10 +1,8 @@
 volumes:
-  nautilus-db-data:
-  cargo-cache:
-  target-cache:
+  nautilus-test-db-data:
 
 networks:
-  nautilus-network:
+  nautilus-test-network:
 
 services:
   server:
@@ -15,24 +13,40 @@ services:
       - "5050:5050"
     volumes:
       - .:/app
-    # - cargo-cache:/usr/local/cargo/registry
-    # - target-cache:/app/target
     environment:
       - RUST_LOG=nautilus=trace,otel::tracing=trace,otel=debug,tower_http=debug,axum::rejection=trace,diesel_logger=debug
-      # - CARGO_TARGET_DIR=/target
-      # - NAUTILUS_ENVIRONMENT=test
       - DB_URL=postgresql://postgres:postgres@localhost:5433/postgres
+      - CARGO_TERM_COLOR= always
+      - NAUTILUS_ENVIRONMENT= test
+      - AUTH__AUTH_DOMAIN= auth
+      - AUTH__AUTH_AUDIENCE= auth
+      - AUTH__AUTH_MANAGEMENT_AUDIENCE= auth
+      - AUTH__AUTH_MANAGEMENT_CLIENT_ID= auth
+      - AUTH__AUTH_MANAGEMENT_SECRET= auth
     depends_on:
       - db
+      - migrations
     networks:
-      - nautilus-network
+      - nautilus-test-network
 
+  migrations:
+    build:
+      dockerfile: ./docker/Dockerfile.test.migrations
+      context: .
+    volumes:
+      - ./:/app
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - nautilus-test-network
   db:
     image: postgres:16.0
     restart: always
     attach: false
     volumes:
-      - nautilus-db-data:/var/lib/postgresql/data
+      - nautilus-test-db-data:/var/lib/postgresql/data
     environment:
       - PGUSER=postgres
       - POSTGRES_DB=postgres
@@ -46,4 +60,4 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - nautilus-network
+      - nautilus-test-network

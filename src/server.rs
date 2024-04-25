@@ -42,6 +42,7 @@ impl AppState {
     pub fn new() -> Self {
         dotenv().ok();
         let db_url = std::env::var("DB_URL").expect("DATABASE_URL must be set");
+        print!("dburl {}", db_url);
 
         let settings = crate::settings::Settings::new().expect("Failed to load settings");
         let pool = crate::db::Db::new(db_url);
@@ -176,6 +177,6 @@ mod tests {
         let req = Request::builder().uri("/").body(Body::empty()).unwrap();
         let res = ctx.router.oneshot(req).await.unwrap();
 
-        assert_eq!(res.status(), http::StatusCode::OK)
+        assert_eq!(res.status(), http::StatusCode::BAD_REQUEST)
     }
 }

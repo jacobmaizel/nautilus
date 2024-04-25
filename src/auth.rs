@@ -13,11 +13,8 @@ use axum::{
     middleware::Next,
     response::Response,
 };
-use axum_extra::{
-    headers::{authorization::Bearer, Authorization},
-    TypedHeader,
-};
 use diesel::{insert_into, prelude::*};
+use http::HeaderMap;
 use jsonwebtoken::{
     decode, decode_header,
     jwk::{AlgorithmParameters, JwkSet},
@@ -182,26 +179,32 @@ pub async fn get_auth0_user<'a>(
 }
 
 #[allow(unused_variables)]
-#[tracing::instrument(skip_all)]
+// #[tracing::instrument(skip_all)]
 pub async fn auth_middleware(
     State(state): State<Arc<AppState>>,
-    token: Option<TypedHeader<Authorization<Bearer>>>,
+    headers: HeaderMap,
     mut request: Request,
     next: Next,
 ) -> Result<Response, BoxedAppError> {
-    // Early return in Test
-    // if cfg!(test) {
-    //     let user_id = create_test_user(&mut state.db_pool.get_conn()).unwrap();
-    //     request.extensions_mut().insert(user_id);
+    let token = headers.get("Auth").map(|x| x.to_str());
 
-    //     return Ok(next.run(request).await);
-    // }
+    if let Some(Ok(token)) = token {
+        let token_parts = token.split(' ').collect::<Vec<&str>>();
 
-    if let Some(token) = token {
-        let token = token.token();
-        // Extract provider id from token
+        if token_parts.len() != 2 {
+            error!("Token was NOT LENGTH 2");
+            return Err(unauthorized());
+        }
+
+        if token_parts[0] != "Bearer" {
+            error!("Token was not BEARER, it was {}", token_parts[0]);
+            return Err(unauthorized());
+        }
+
+        let access_token = token_parts[1];
+
         let sub = extract_user_provider_id(
-            token,
+            access_token,
             &state.settings.auth_audience,
             &state.settings.auth_management_audience,
             &state.settings.auth_domain,
@@ -237,6 +240,8 @@ pub async fn auth_middleware(
     } else {
         Err(unauthorized())
     }
+
+    // Extract provider id from token
 }
 
 async fn get_or_create_user_from_provider_id<'a>(

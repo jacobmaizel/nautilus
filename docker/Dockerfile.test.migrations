@@ -1,0 +1,16 @@
+FROM rust:latest
+
+RUN cargo install diesel_cli --no-default-features --features postgres
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y postgresql-client
+
+COPY ./scripts/ ./scripts/
+COPY ./migrations/ ./migrations/
+
+RUN chmod +x ./scripts/run_migrations.sh
+
+ENTRYPOINT ["./scripts/run_migrations.sh", "postgres://postgres:postgres@localhost:5433/postgres"]
+
+

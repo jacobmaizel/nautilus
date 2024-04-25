@@ -21,11 +21,9 @@ use serde::{Deserialize, Serialize};
 //     intensity -> IntensityChoices,
 //     #[max_length = 255]
 //     slug -> Varchar,
-//
-// template -> Bool,
-// client_id -> Nullable<Uuid>,
-//
-//     active bool
+//     template -> Bool,
+//     client_id -> Nullable<Uuid>,
+//     active -> Bool,
 // }
 
 #[derive(Debug, Clone, Queryable, Selectable, Serialize, Identifiable, Associations)]
@@ -50,6 +48,22 @@ pub struct Program {
     pub template: bool,
     pub client_id: Option<uuid::Uuid>,
     pub active: bool,
+}
+
+#[derive(Insertable, Deserialize, Debug, AsChangeset)]
+#[diesel(table_name = crate::schema::programs)]
+pub struct PatchProgram {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub duration: Option<String>,
+    pub focus_areas: Option<String>,
+    pub target_audience: Option<String>,
+    pub program_image: Option<String>,
+    pub intensity: Option<super::IntensityChoices>,
+    pub slug: Option<String>,
+    pub template: Option<bool>,
+    pub client_id: Option<uuid::Uuid>,
+    pub active: Option<bool>,
 }
 
 #[derive(Insertable, Deserialize, Debug, AsChangeset)]

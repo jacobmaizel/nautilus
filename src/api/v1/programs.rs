@@ -2,10 +2,10 @@ use crate::{
     db::models::{
         client::Client,
         exercise::Exercise,
-        program::{NewProgram, Program},
+        program::{NewProgram, PatchProgram, Program},
         workout::{Workout, WorkoutWithExercises},
     },
-    error::custom,
+    error::{custom, unauthorized},
     server::AppState,
     types::AppResult,
     util::{
@@ -233,20 +233,37 @@ async fn create_program(
 // #[debug_handler]
 async fn update_program(
     State(state): State<Arc<AppState>>,
+    UserIdExtractor(req_user_id): UserIdExtractor,
     Path(program_id_to_update): Path<uuid::Uuid>,
-    JsonExtractor(body): JsonExtractor<NewProgram>,
+    JsonExtractor(body): JsonExtractor<PatchProgram>,
 ) -> AppResult<Json<Program>> {
-    use crate::schema::programs::dsl::*;
+    use crate::schema::{programs::dsl::*, users::dsl as u_dsl};
 
     // println!("Updating program with id: {:?}", program_id_to_update);
+    // req user needs to be owner of program
 
-    let res = diesel::update(programs)
+    let mut conn = state.db_pool.get_conn();
+
+    let req_user_is_admin: bool = u_dsl::users
+        .filter(u_dsl::id.eq(req_user_id))
+        .select(u_dsl::is_admin)
+        .first(&mut conn)?;
+
+    let req_program_owner_id: Option<uuid::Uuid> = programs
         .filter(id.eq(program_id_to_update))
-        .set(body)
-        .returning(Program::as_select())
-        .get_result::<Program>(&mut state.db_pool.get_conn())?;
+        .select(owner_id)
+        .first(&mut conn)?;
 
-    Ok(Json(res))
+    if req_program_owner_id == Some(req_user_id) || req_user_is_admin {
+        let res = diesel::update(programs)
+            .filter(id.eq(program_id_to_update))
+            .set(body)
+            .returning(Program::as_select())
+            .get_result::<Program>(&mut state.db_pool.get_conn())?;
+
+        return Ok(Json(res));
+    }
+    Err(unauthorized())
 }
 
 // #[debug_handler]
