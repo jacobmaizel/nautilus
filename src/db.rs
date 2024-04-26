@@ -51,7 +51,6 @@ fn init_db(url: String) -> Result<DbPool> {
 }
 
 fn create_connection_pool(url: String) -> Result<DbPool> {
-    print!("DB POOL CREATION URL {}", url);
     let manager = ConnectionManager::<PgConnection>::new(url);
 
     let pool = diesel::r2d2::Pool::builder()

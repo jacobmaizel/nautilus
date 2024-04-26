@@ -42,7 +42,6 @@ impl AppState {
     pub fn new() -> Self {
         dotenv().ok();
         let db_url = std::env::var("DB_URL").expect("DATABASE_URL must be set");
-        print!("dburl {}", db_url);
 
         let settings = crate::settings::Settings::new().expect("Failed to load settings");
         let pool = crate::db::Db::new(db_url);

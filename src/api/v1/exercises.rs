@@ -59,6 +59,7 @@ async fn list_exercises(
     };
 
     let res = base_q
+        .order(sequence.asc())
         .select(Exercise::as_select())
         .load::<Exercise>(&mut state.db_pool.get_conn())?;
 

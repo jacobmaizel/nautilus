@@ -151,11 +151,14 @@ async fn list_programs(
         .select(Program::as_select())
         .load::<Program>(&mut conn)?;
 
+    use crate::schema::{exercises::dsl as exer_dsl, workouts::dsl as workout_dsl};
     let workouts_belonging_to_programs = Workout::belonging_to(&program_db_res)
+        .order(workout_dsl::sequence.asc())
         .select(Workout::as_select())
         .load::<Workout>(&mut conn)?;
 
     let exercises_belonging_to_workouts = Exercise::belonging_to(&workouts_belonging_to_programs)
+        .order(exer_dsl::sequence.asc())
         .select(Exercise::as_select())
         .load::<Exercise>(&mut conn)?;
 

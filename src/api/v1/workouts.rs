@@ -109,10 +109,13 @@ async fn list_workouts(
 
     let mut conn = state.db_pool.get_conn();
     let workouts_res = base_q
+        .order(sequence.asc())
         .select(Workout::as_select())
         .load::<Workout>(&mut conn)?;
 
+    use crate::schema::exercises::dsl as exer_dsl;
     let exercises_res: Vec<Exercise> = Exercise::belonging_to(&workouts_res)
+        .order(exer_dsl::sequence.asc())
         .select(Exercise::as_select())
         .load(&mut conn)?;
 
