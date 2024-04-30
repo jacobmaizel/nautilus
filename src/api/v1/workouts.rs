@@ -172,6 +172,12 @@ async fn create_workout(
     Ok(Json(wrk_exer))
 }
 
+#[derive(Queryable, Clone)]
+struct ProgActiveCounter {
+    id: uuid::Uuid,
+    complete: bool,
+}
+
 async fn update_workout(
     State(state): State<Arc<AppState>>,
     UserIdExtractor(req_user_id): UserIdExtractor,
@@ -222,6 +228,34 @@ async fn update_workout(
         let wrk_exer = WorkoutWithExercises {
             workout: res,
             exercises: exercises_belonging_to_workouts,
+        };
+
+        // if all of the programs workouts are not complete, set program as complete!
+        if let Some(prog_id) = workout_from_path.program_id {
+            println!("inside this thing");
+            let prog_workouts: Result<Vec<ProgActiveCounter>, diesel::result::Error> = workouts
+                .filter(program_id.eq(prog_id))
+                .select((id, complete))
+                .load::<ProgActiveCounter>(&mut conn);
+
+            if let Ok(wkts) = prog_workouts {
+                println!("we had workouts");
+                let completed = wkts.clone().into_iter().filter(|w| w.complete).count();
+
+                println!(
+                    "completed count {}, total count {}",
+                    completed.clone(),
+                    wkts.len()
+                );
+
+                if completed == wkts.len() {
+                    // all of the workouts have been completed! update the program
+                    let _res = update(pro_dsl::programs)
+                        .filter(pro_dsl::id.eq(prog_id))
+                        .set(pro_dsl::complete.eq(true))
+                        .execute(&mut conn);
+                }
+            }
         };
 
         return Ok(Json(wrk_exer));

@@ -166,6 +166,7 @@ diesel::table! {
         template -> Bool,
         client_id -> Nullable<Uuid>,
         active -> Bool,
+        complete -> Bool,
     }
 }
 

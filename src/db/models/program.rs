@@ -48,6 +48,7 @@ pub struct Program {
     pub template: bool,
     pub client_id: Option<uuid::Uuid>,
     pub active: bool,
+    pub complete: bool,
 }
 
 #[derive(Insertable, Deserialize, Debug, AsChangeset)]
@@ -64,6 +65,7 @@ pub struct PatchProgram {
     pub template: Option<bool>,
     pub client_id: Option<uuid::Uuid>,
     pub active: Option<bool>,
+    pub complete: Option<bool>,
 }
 
 #[derive(Insertable, Deserialize, Debug, AsChangeset)]
