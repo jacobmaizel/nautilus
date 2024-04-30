@@ -9,6 +9,7 @@ pub mod notification;
 pub mod program;
 pub mod user;
 pub mod workout;
+pub mod workout_data;
 
 #[derive(diesel_derive_enum::DbEnum, Debug, Serialize, Clone, Deserialize)]
 #[ExistingTypePath = "crate::schema::sql_types::IntensityChoices"]

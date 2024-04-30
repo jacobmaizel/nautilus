@@ -212,6 +212,26 @@ diesel::table! {
 }
 
 diesel::table! {
+    workout_data (id) {
+        id -> Uuid,
+        created_at -> Timestamptz,
+        workout_id -> Nullable<Uuid>,
+        #[max_length = 50]
+        hk_workout_id -> Varchar,
+        #[max_length = 50]
+        hk_location_type -> Varchar,
+        #[max_length = 50]
+        hk_workout_activity_type -> Varchar,
+        hk_workout_duration_secs -> Int4,
+        hk_workout_start_date -> Nullable<Timestamptz>,
+        hk_workout_end_date -> Nullable<Timestamptz>,
+        hk_workout_distance_meters -> Float8,
+        hk_workout_avg_heart_rate -> Int4,
+        hk_workout_active_energy_burned -> Int4,
+    }
+}
+
+diesel::table! {
     use diesel::sql_types::*;
     use super::sql_types::IntensityChoices;
 
@@ -251,6 +271,7 @@ diesel::joinable!(exercises -> workouts (workout_id));
 diesel::joinable!(feedback -> users (user_id));
 diesel::joinable!(programs -> clients (client_id));
 diesel::joinable!(programs -> users (owner_id));
+diesel::joinable!(workout_data -> workouts (workout_id));
 diesel::joinable!(workouts -> programs (program_id));
 diesel::joinable!(workouts -> users (owner_id));
 
@@ -264,5 +285,6 @@ diesel::allow_tables_to_appear_in_same_query!(
     notifications,
     programs,
     users,
+    workout_data,
     workouts,
 );
