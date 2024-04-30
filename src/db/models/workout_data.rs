@@ -18,12 +18,12 @@ pub struct WorkoutData {
     pub hk_workout_id: String,
     pub hk_location_type: String,
     pub hk_workout_activity_type: String,
-    pub hk_workout_duration_secs: i32,
+    pub hk_workout_duration_secs: String,
     pub hk_workout_start_date: Option<chrono::DateTime<chrono::Utc>>,
     pub hk_workout_end_date: Option<chrono::DateTime<chrono::Utc>>,
-    pub hk_workout_distance_meters: f64,
-    pub hk_workout_avg_heart_rate: i32,
-    pub hk_workout_active_energy_burned: i32,
+    pub hk_workout_distance: String,
+    pub hk_workout_avg_heart_rate: String,
+    pub hk_workout_active_energy_burned: String,
 }
 
 #[derive(Insertable, Deserialize, Debug, AsChangeset)]
@@ -33,10 +33,10 @@ pub struct NewWorkoutData {
     pub hk_workout_id: String,
     pub hk_location_type: String,
     pub hk_workout_activity_type: String,
-    pub hk_workout_duration_secs: i32,
+    pub hk_workout_duration_secs: String,
     pub hk_workout_start_date: Option<chrono::DateTime<chrono::Utc>>,
     pub hk_workout_end_date: Option<chrono::DateTime<chrono::Utc>>,
-    pub hk_workout_distance_meters: f64,
-    pub hk_workout_avg_heart_rate: i32,
-    pub hk_workout_active_energy_burned: i32,
+    pub hk_workout_distance: String,
+    pub hk_workout_avg_heart_rate: String,
+    pub hk_workout_active_energy_burned: String,
 }

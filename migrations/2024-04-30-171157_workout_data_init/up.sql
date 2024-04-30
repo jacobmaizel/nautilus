@@ -14,14 +14,14 @@ CREATE TABLE workout_data(
     hk_location_type VARCHAR(50) NOT NULL DEFAULT '', -- indoor / outdoor
     hk_workout_activity_type VARCHAR(50) NOT NULL DEFAULT '',
 
-    hk_workout_duration_secs INTEGER NOT NULL DEFAULT 0,
+    hk_workout_duration_secs VARCHAR(50) NOT NULL DEFAULT '',
 
     hk_workout_start_date TIMESTAMPTZ,
     hk_workout_end_date TIMESTAMPTZ,
 
-    hk_workout_distance_meters FLOAT NOT NULL DEFAULT 0,
-    hk_workout_avg_heart_rate INTEGER NOT NULL DEFAULT 0,
-    hk_workout_active_energy_burned INTEGER NOT NULL DEFAULT 0
+    hk_workout_distance VARCHAR(50) NOT NULL DEFAULT '',
+    hk_workout_avg_heart_rate VARCHAR(50) NOT NULL DEFAULT '',
+    hk_workout_active_energy_burned VARCHAR(50) NOT NULL DEFAULT ''
   );
 
   CREATE INDEX "index_hk_workout_id_on_workout_data"

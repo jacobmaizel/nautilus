@@ -25,7 +25,7 @@ pub fn workout_routes() -> Router<Arc<AppState>> {
     Router::new()
         .route("/", get(list_workouts).post(create_workout))
         .route(
-            "/:workout_id/data",
+            "/:path_workout_id/data",
             get(get_workout_data).post(create_workout_data),
         )
         .route(
@@ -257,7 +257,7 @@ async fn get_workout_data(
     State(state): State<Arc<AppState>>,
     UserIdExtractor(req_user_id): UserIdExtractor,
     Path(path_workout_id): Path<uuid::Uuid>,
-) -> AppResult<Json<Vec<WorkoutData>>> {
+) -> AppResult<Json<WorkoutData>> {
     use crate::schema::workouts::dsl as wkt_dsl;
 
     let conn = state.db_pool.get_conn();
@@ -271,9 +271,9 @@ async fn get_workout_data(
         .select(Workout::as_select())
         .first(&mut conn)?;
 
-    let res: Vec<WorkoutData> = WorkoutData::belonging_to(&db_wkt)
+    let res: WorkoutData = WorkoutData::belonging_to(&db_wkt)
         .select(WorkoutData::as_select())
-        .load(&mut conn)?;
+        .first(&mut conn)?;
 
     Ok(Json(res))
 }

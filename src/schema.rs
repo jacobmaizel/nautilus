@@ -222,12 +222,16 @@ diesel::table! {
         hk_location_type -> Varchar,
         #[max_length = 50]
         hk_workout_activity_type -> Varchar,
-        hk_workout_duration_secs -> Int4,
+        #[max_length = 50]
+        hk_workout_duration_secs -> Varchar,
         hk_workout_start_date -> Nullable<Timestamptz>,
         hk_workout_end_date -> Nullable<Timestamptz>,
-        hk_workout_distance_meters -> Float8,
-        hk_workout_avg_heart_rate -> Int4,
-        hk_workout_active_energy_burned -> Int4,
+        #[max_length = 50]
+        hk_workout_distance -> Varchar,
+        #[max_length = 50]
+        hk_workout_avg_heart_rate -> Varchar,
+        #[max_length = 50]
+        hk_workout_active_energy_burned -> Varchar,
     }
 }
 
